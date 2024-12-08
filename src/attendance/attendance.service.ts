@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Employee } from '../employee/entities/employee.entity';
 import { Attendance } from './entities/attendance.entity';
 
@@ -15,23 +15,40 @@ export class AttendanceService {
     private employeeRepository: Repository<Employee>,
   ) {}
 
-  create(createAttendanceDto: CreateAttendanceDto) {
-    return 'This action adds a new attendance';
+  async checkIn(createAttendanceDto: CreateAttendanceDto) {
+    const employee = await this.employeeRepository.findOne({
+      where: { id: createAttendanceDto.employeeId },
+    });
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+    const attendance = this.attendanceRepository.create({
+      employee: employee,
+      checkIn: new Date(),
+    });
+    return this.attendanceRepository.save(attendance);
   }
 
-  findAll() {
-    return `This action returns all attendance`;
+  async checkOut(userId: number) {
+    const attendances = await this.attendanceRepository.find({
+      where: { employee: { id: userId }, checkOut: IsNull() },
+    });
+    if (!attendances) {
+      throw new NotFoundException('Attendance not found');
+    }
+
+    const updateAttendances = attendances.map((attendance) => {
+      attendance.checkOut = new Date();
+      return this.attendanceRepository.save(attendance);
+    });
+    await Promise.all(updateAttendances);
+    // attendance.checkOut = new Date();
+    return attendances;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} attendance`;
-  }
-
-  update(id: number, updateAttendanceDto: UpdateAttendanceDto) {
-    return `This action updates a #${id} attendance`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} attendance`;
+  async getAttendanceByEmployee(employeeId: number): Promise<Attendance[]> {
+    return this.attendanceRepository.find({
+      where: { employee: { id: employeeId } },
+    });
   }
 }

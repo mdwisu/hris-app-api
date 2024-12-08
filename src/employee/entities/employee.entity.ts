@@ -1,9 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Attendance } from '../../attendance/entities/attendance.entity';
 
 @Entity()
 export class Employee {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @OneToMany(() => Attendance, (attendance) => attendance.employee)
+  attendances: Attendance[];
 
   @Column()
   name: string;

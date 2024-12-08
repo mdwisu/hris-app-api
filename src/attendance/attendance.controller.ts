@@ -1,34 +1,41 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  @Post()
-  create(@Body() createAttendanceDto: CreateAttendanceDto) {
-    return this.attendanceService.create(createAttendanceDto);
+  @Post('check-in')
+  @UseGuards(JwtAuthGuard)
+  checkIn(
+    @Request() req: any,
+    @Body() createAttendanceDto: CreateAttendanceDto,
+  ) {
+    return this.attendanceService.checkIn(createAttendanceDto);
   }
 
-  @Get()
-  findAll() {
-    return this.attendanceService.findAll();
+  @Post('check-out')
+  @UseGuards(JwtAuthGuard)
+  checkOut(@Request() req: any) {
+    return this.attendanceService.checkOut(req.user.id);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.attendanceService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAttendanceDto: UpdateAttendanceDto) {
-    return this.attendanceService.update(+id, updateAttendanceDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.attendanceService.remove(+id);
+  @Get('employee')
+  @UseGuards(JwtAuthGuard)
+  getAttendanceByEmployee(@Request() req: any) {
+    return this.attendanceService.getAttendanceByEmployee(req.user.id);
   }
 }

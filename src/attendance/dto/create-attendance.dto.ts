@@ -1,1 +1,3 @@
-export class CreateAttendanceDto {}
+export class CreateAttendanceDto {
+  employeeId: number;
+}
